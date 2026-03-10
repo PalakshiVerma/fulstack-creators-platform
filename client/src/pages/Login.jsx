@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
-  // Form field state
+  const { login } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -88,12 +90,7 @@ const handleSubmit = async (e) => {
 
     if (response.ok) {
       // Login successful
-      
-      // 1. Store token in localStorage
-      localStorage.setItem('token', data.token);
-      
-      // 2. Store user data (optional, for display purposes)
-      localStorage.setItem('user', JSON.stringify(data.user));
+      login(data.user, data.token);
 
       // 3. Clear form
       setFormData({ email: '', password: '' });
@@ -113,31 +110,6 @@ const handleSubmit = async (e) => {
     setIsLoading(false);
   }
 };
-
-const isTokenExpired = (token) => {
-  if (!token) return true;
-
-  try {
-    // Decode the payload (middle part of JWT)
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    
-    // Check if token has expired
-    const currentTime = Date.now() / 1000; // Convert to seconds
-    return payload.exp < currentTime;
-    
-  } catch (error) {
-    // If decoding fails, consider token invalid
-    return true;
-  }
-};
-
-// Usage example:
-const token = localStorage.getItem('token');
-if (isTokenExpired(token)) {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  // Redirect to login
-}
 
   return (
   <div style={containerStyle}>

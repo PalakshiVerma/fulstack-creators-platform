@@ -1,43 +1,22 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const Dashboard = () => {
-  const [user, setUser] = useState(null);
+  const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-
-    if (!token || !userData) {
-      // Not logged in - redirect to login
-      navigate('/login');
-      return;
-    }
-
-    // Parse and set user data
-    try {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      navigate('/login');
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Redirect to login
-    navigate('/login');
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
-    return <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>;
+    return <Navigate to="/login" />;
   }
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div style={containerStyle}>

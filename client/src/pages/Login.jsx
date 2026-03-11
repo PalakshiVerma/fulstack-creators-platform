@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { login } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -15,7 +17,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const navigate = useNavigate();
 
   // Handlers will go here
 
@@ -96,7 +97,8 @@ const handleSubmit = async (e) => {
       setFormData({ email: '', password: '' });
 
       // 4. Redirect to dashboard
-      navigate('/dashboard');
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
 
     } else {
       // Login failed

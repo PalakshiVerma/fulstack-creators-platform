@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import PublicRoute from './components/common/PublicRoute';
+import CreatePost from './pages/CreatePost';
+
 
 function App() {
   return (
@@ -48,6 +50,16 @@ function App() {
               </ProtectedRoute>
               }
               />
+
+              <Route
+                path="/create"
+                element={
+                  <ProtectedRoute>
+                    <CreatePost />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* 404 Page - catches all unmatched routes */}
               <Route path="*" element={<NotFound />} />
             </Routes>

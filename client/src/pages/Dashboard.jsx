@@ -1,9 +1,28 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import api from '../services/api';
 
 const Dashboard = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [profileError, setProfileError] = useState('');
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await api.get('/api/users/me');
+        setProfile(response.data?.data || null);
+      } catch (error) {
+        setProfileError(error.response?.data?.message || 'Unable to load profile');
+      }
+    };
+
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -31,9 +50,10 @@ const Dashboard = () => {
         <div style={cardStyle}>
           <h2>Your Account</h2>
           <div style={infoStyle}>
-            <p><strong>Name:</strong> {user.name}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Member Since:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+            <p><strong>Name:</strong> {(profile || user).name}</p>
+            <p><strong>Email:</strong> {(profile || user).email}</p>
+            <p><strong>Member Since:</strong> {new Date((profile || user).createdAt).toLocaleDateString()}</p>
+            {profileError && <p style={{ color: '#dc3545' }}>{profileError}</p>}
           </div>
         </div>
 

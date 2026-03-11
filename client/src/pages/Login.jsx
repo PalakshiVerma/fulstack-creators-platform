@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import api from '../services/api';
 
 const Login = () => {
   const location = useLocation();
@@ -75,22 +76,13 @@ const handleSubmit = async (e) => {
   setIsLoading(true);
 
   try {
-    // Send login request
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password
-      })
-    });
+    const payload = {
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password
+    };
+    const { data } = await api.post('/api/auth/login', payload);
 
-    const data = await response.json();
-
-    if (response.ok) {
-      // Login successful
+    if (data?.success) {
       login(data.user, data.token);
 
       // 3. Clear form
@@ -101,13 +93,12 @@ const handleSubmit = async (e) => {
       navigate(from, { replace: true });
 
     } else {
-      // Login failed
-      setApiError(data.message || 'Login failed. Please try again.');
+      setApiError(data?.message || 'Login failed. Please try again.');
     }
 
   } catch (error) {
     console.error('Login error:', error);
-    setApiError('Unable to connect to server. Please try again.');
+    setApiError(error.response?.data?.message || 'Unable to connect to server. Please try again.');
   } finally {
     setIsLoading(false);
   }

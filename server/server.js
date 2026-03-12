@@ -5,6 +5,7 @@ import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js'; 
 import postRoutes from './routes/postRoutes.js';
+import errorHandler from './middleware/errorHandler.js';
 
 
 // Load environment variables
@@ -29,9 +30,10 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
-    // Otherwise, reject
-    callback(new Error('Not allowed by CORS'));
+
+    callback(Object.assign(new Error('Not allowed by CORS'), {
+      statusCode: 403
+    }));
   },
   credentials: true,
   optionsSuccessStatus: 200
@@ -50,6 +52,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 app.use('/api/posts', postRoutes);
+
+app.use((req, res, next) => {
+  next({
+    statusCode: 404,
+    message: 'Route not found'
+  });
+});
+
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

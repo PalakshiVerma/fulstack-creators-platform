@@ -6,7 +6,8 @@ import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js'; 
 import postRoutes from './routes/postRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
-
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 // Load environment variables
 dotenv.config();
@@ -15,23 +16,51 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// Allow both localhost ports for development
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+// Keep CORS origins in one place for both API and Socket.IO.
+const defaultAllowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const envAllowedOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
 
+const isOriginAllowed = (origin) => {
+  // Allow requests with no Origin header (e.g., same-origin/server-to-server).
+  if (!origin) return true;
+  return allowedOrigins.includes(origin);
+};
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+io.on('connection', (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
+  // Handle disconnection
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ User disconnected: ${socket.id} (${reason})`);
+  });
+});
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    // If no origin (e.g., same-origin requests), allow it
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is in the allowed list
-    if (allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
 
-    callback(Object.assign(new Error('Not allowed by CORS'), {
+    return callback(Object.assign(new Error('Not allowed by CORS'), {
       statusCode: 403
     }));
   },
@@ -63,6 +92,7 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🔌 Socket.io ready for connections`);
 });

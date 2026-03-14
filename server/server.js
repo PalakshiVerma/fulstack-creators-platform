@@ -9,6 +9,7 @@ import postRoutes from './routes/postRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import uploadRoutes from "./routes/upload.js";
 
 // Load environment variables
 dotenv.config();
@@ -19,7 +20,7 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
-
+app.use("/api/upload", uploadRoutes);
 // Keep CORS origins in one place for both API and Socket.IO.
 const defaultAllowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
 const envAllowedOrigins = (process.env.CLIENT_URL || '')
@@ -71,6 +72,7 @@ io.on('connection', (socket) => {
     console.log(`User disconnected: ${socket.id} (${reason})`);
   });
 });
+
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
